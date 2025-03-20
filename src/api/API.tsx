@@ -1,43 +1,59 @@
-const searchGithub = async () => {
+interface GithubUser {
+  id: number;
+  login: string;
+  avatar_url: string;
+  html_url: string;
+  name?: string;
+  location?: string;
+  email?: string;
+  company?: string;
+  bio?: string;
+}
+
+interface GithubSearchResponse {
+  items: GithubUser[];
+}
+
+const searchGithub = async (query: string): Promise<GithubUser[]> => {
   try {
-    const start = Math.floor(Math.random() * 100000000) + 1;
-    // console.log(import.meta.env);
     const response = await fetch(
-      `https://api.github.com/users?since=${start}`,
+      `https://api.github.com/search/users?q=${query}`,
       {
         headers: {
           Authorization: `Bearer ${import.meta.env.VITE_GITHUB_TOKEN}`,
         },
       }
     );
-    // console.log('Response:', response);
-    const data = await response.json();
+
     if (!response.ok) {
-      throw new Error('invalid API response, check the network tab');
+      throw new Error('Invalid API response, check the network tab');
     }
-    // console.log('Data:', data);
-    return data;
+
+    const data: GithubSearchResponse = await response.json();
+    return data.items; // Return the `items` array
   } catch (err) {
-    // console.log('an error occurred', err);
+    console.error('An error occurred:', err);
     return [];
   }
 };
 
-const searchGithubUser = async (username: string) => {
+const searchGithubUser = async (username: string): Promise<GithubUser> => {
   try {
     const response = await fetch(`https://api.github.com/users/${username}`, {
       headers: {
         Authorization: `Bearer ${import.meta.env.VITE_GITHUB_TOKEN}`,
       },
     });
-    const data = await response.json();
+
     if (!response.ok) {
-      throw new Error('invalid API response, check the network tab');
+      throw new Error('Invalid API response, check the network tab');
     }
+
+    const data: GithubUser = await response.json();
     return data;
   } catch (err) {
-    // console.log('an error occurred', err);
-    return {};
+    console.error('An error occurred:', err);
+    return {} as GithubUser;
   }
 };
 
