@@ -1,6 +1,13 @@
 import { NavLink } from 'react-router-dom';
 import { FaUserFriends, FaHome } from 'react-icons/fa';
 
+// Define type for styles
+type Styles = {
+  [key: string]: React.CSSProperties & {
+    ':hover'?: React.CSSProperties;
+  };
+};
+
 const Nav = () => {
   return (
     <nav style={styles.nav}>
@@ -33,14 +40,14 @@ const Nav = () => {
   );
 };
 
-const styles = {
+const styles: Styles = {
   nav: {
     backgroundColor: '#2d3748',
     padding: '0 2rem',
     height: '60px',
     display: 'flex',
     alignItems: 'center',
-    position: 'sticky',
+    position: 'sticky' as const, // Type assertion
     top: 0,
     zIndex: 1000,
     borderBottom: '1px solid #4a5568'
@@ -60,7 +67,7 @@ const styles = {
     color: '#e2e8f0',
     textDecoration: 'none',
     fontSize: '1rem',
-    fontWeight: '500',
+    fontWeight: 500, // Changed to number
     padding: '0.75rem 0',
     display: 'flex',
     alignItems: 'center',

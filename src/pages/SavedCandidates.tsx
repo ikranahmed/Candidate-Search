@@ -2,6 +2,13 @@ import { useState, useEffect } from 'react';
 import type { Candidate } from '../interfaces/Candidate.interface';
 import { FaTrashAlt, FaMapMarkerAlt, FaEnvelope, FaBuilding } from 'react-icons/fa';
 
+// Define type for styles with hover support
+type Styles = {
+  [key: string]: React.CSSProperties & {
+    ':hover'?: React.CSSProperties;
+  };
+};
+
 const SavedCandidates = () => {
   const [savedCandidates, setSavedCandidates] = useState<Candidate[]>([]);
 
@@ -71,7 +78,7 @@ const SavedCandidates = () => {
   );
 };
 
-const styles = {
+const styles: Styles = {
   container: {
     padding: '2rem',
     fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
@@ -82,7 +89,7 @@ const styles = {
     fontSize: '2rem',
     marginBottom: '2rem',
     color: '#2d3748',
-    fontWeight: '600',
+    fontWeight: 600, // Changed from string to number
     textAlign: 'center' as const,
   },
   candidatesList: {
@@ -109,7 +116,7 @@ const styles = {
     width: '80px',
     height: '80px',
     borderRadius: '50%',
-    objectFit: 'cover',
+    objectFit: 'cover' as const,
   },
   rightSection: {
     flexGrow: 1,

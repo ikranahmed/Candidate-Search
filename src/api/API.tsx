@@ -10,14 +10,9 @@ interface GithubUser {
   bio?: string;
 }
 
-interface GithubSearchResponse {
-  items: GithubUser[];
-}
-
-const searchGithub = async () => {
+const searchGithub = async (): Promise<GithubUser[]> => {
   try {
     const start = Math.floor(Math.random() * 100000000) + 1;
-    // console.log(import.meta.env);
     const response = await fetch(
       `https://api.github.com/users?since=${start}`,
       {
@@ -26,15 +21,14 @@ const searchGithub = async () => {
         },
       }
     );
-    // console.log('Response:', response);
-    const data = await response.json();
+
     if (!response.ok) {
-      throw new Error('invalid API response, check the network tab');
+      throw new Error('Invalid API response, check the network tab');
     }
-    // console.log('Data:', data);
-    return data;
+
+    return await response.json();
   } catch (err) {
-    // console.log('an error occurred', err);
+    console.error('Error fetching GitHub users:', err);
     return [];
   }
 };
@@ -48,14 +42,18 @@ const searchGithubUser = async (username: string): Promise<GithubUser> => {
     });
 
     if (!response.ok) {
-      throw new Error('Invalid API response, check the network tab');
+      throw new Error(`GitHub API error: ${response.status} ${response.statusText}`);
     }
 
-    const data: GithubUser = await response.json();
-    return data;
+    return await response.json();
   } catch (err) {
-    console.error('An error occurred:', err);
-    return {} as GithubUser;
+    console.error('Error fetching GitHub user:', err);
+    return {
+      id: 0,
+      login: '',
+      avatar_url: '',
+      html_url: '',
+    };
   }
 };
 
