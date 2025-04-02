@@ -14,25 +14,27 @@ interface GithubSearchResponse {
   items: GithubUser[];
 }
 
-const searchGithub = async (query: string): Promise<GithubUser[]> => {
+const searchGithub = async () => {
   try {
+    const start = Math.floor(Math.random() * 100000000) + 1;
+    // console.log(import.meta.env);
     const response = await fetch(
-      `https://api.github.com/search/users?q=${query}`,
+      `https://api.github.com/users?since=${start}`,
       {
         headers: {
           Authorization: `Bearer ${import.meta.env.VITE_GITHUB_TOKEN}`,
         },
       }
     );
-
+    // console.log('Response:', response);
+    const data = await response.json();
     if (!response.ok) {
-      throw new Error('Invalid API response, check the network tab');
+      throw new Error('invalid API response, check the network tab');
     }
-
-    const data: GithubSearchResponse = await response.json();
-    return data.items; // Return the `items` array
+    // console.log('Data:', data);
+    return data;
   } catch (err) {
-    console.error('An error occurred:', err);
+    // console.log('an error occurred', err);
     return [];
   }
 };

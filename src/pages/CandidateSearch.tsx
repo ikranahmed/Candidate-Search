@@ -1,85 +1,149 @@
 import { useState, useEffect } from 'react';
 import { searchGithub, searchGithubUser } from '../api/API';
-
-interface GithubUser {
-  id: number;
-  login: string;
-  avatar_url: string;
-  html_url: string;
-}
+import { Candidate } from '../interfaces/Candidate.interface';
 
 const CandidateSearch = () => {
-  const [query, setQuery] = useState<string>('');
-  const [candidates, setCandidates] = useState<GithubUser[]>([]);
-  const [loading, setLoading] = useState<boolean>(false);
+  const [candidate, setCandidate] = useState<Candidate | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (query) {
-      setLoading(true);
-      setError(null);
-      searchGithub(query)
-        .then((data) => {
-          setCandidates(data);
-          setLoading(false);
-        })
-        .catch((err) => {
-          setError(err.message);
-          setLoading(false);
-        });
-    } else {
-      setCandidates([]); 
-    }
-  }, [query]);
-
-  const handleSearch = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const formData = new FormData(event.currentTarget);
-    const searchQuery = formData.get('search') as string;
-    setQuery(searchQuery);
-  };
-
-  const handleSaveCandidate = async (username: string) => {
+  // Fetch a random candidate from GitHub API
+  const fetchCandidate = async () => {
+    setLoading(true);
+    setError(null);
     try {
-      const userDetails = await searchGithubUser(username);
-      const savedCandidates = JSON.parse(localStorage.getItem('savedCandidates') || '[]');
-      savedCandidates.push(userDetails);
-      localStorage.setItem('savedCandidates', JSON.stringify(savedCandidates));
-      alert(`${username} saved successfully!`);
+      const data = await searchGithub();
+      if (data.length > 0) {
+        setCandidate(data[0]); // Display the first candidate
+      } else {
+        setError('No candidates found.');
+      }
     } catch (err) {
-      alert(`Failed to save ${username}: ${err.message}`);
+      setError('Failed to fetch candidate. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
+
+
+  const handleAccept = () => {
+    if (candidate) {
+      const savedCandidates = JSON.parse(localStorage.getItem('savedCandidates') || '[]');
+      savedCandidates.push(candidate);
+      localStorage.setItem('savedCandidates', JSON.stringify(savedCandidates));
+      fetchCandidate(); // Fetch the next candidate
+    }
+  };
+
+ 
+  const handleReject = () => {
+    fetchCandidate(); 
+  };
+
+ 
+  useEffect(() => {
+    fetchCandidate();
+  }, []);
+
+  if (loading) {
+    return <p>Loading...</p>;
+  }
+
+  if (error) {
+    return <p style={{ color: 'red' }}>{error}</p>;
+  }
+
+  if (!candidate) {
+    return <p>No more candidates available.</p>;
+  }
 
   return (
-    <div>
-      <h1>Candidate Search</h1>
-      <form onSubmit={handleSearch}>
-        <input
-          type="text"
-          name="search"
-          placeholder="Search GitHub users..."
-          required
-        />
-        <button type="submit">Search</button>
-      </form>
-
-      {loading && <p>Loading...</p>}
-      {error && <p style={{ color: 'red' }}>{error}</p>}
-
-      <ul>
-        {candidates.map((candidate) => (
-          <li key={candidate.id}>
-            <img src={candidate.avatar_url} alt={candidate.login} width="50" />
-            <a href={candidate.html_url} target="_blank" rel="noopener noreferrer">
-              {candidate.login}
-            </a>
-            <button onClick={() => handleSaveCandidate(candidate.login)}>Save</button>
-          </li>
-        ))}
-      </ul>
+    <div style={styles.container}>
+      <h1 style={styles.header}>Candidate Search</h1>
+      <div style={styles.card}>
+        <img src={candidate.avatar_url} alt={candidate.login} style={styles.avatar} />
+        <h2 style={styles.name}>{candidate.name || candidate.login}</h2>
+        <p style={styles.detail}><strong>Username:</strong> {candidate.login}</p>
+        <p style={styles.detail}><strong>Location:</strong> {candidate.location || 'Not specified'}</p>
+        <p style={styles.detail}><strong>Email:</strong> {candidate.email || 'Not specified'}</p>
+        <p style={styles.detail}><strong>Company:</strong> {candidate.company || 'Not specified'}</p>
+        <p style={styles.detail}>
+          <strong>GitHub:</strong> <a href={candidate.html_url} target="_blank" rel="noopener noreferrer" style={styles.link}>{candidate.html_url}</a>
+        </p>
+      </div>
+      <div style={styles.buttons}>
+        <button onClick={handleAccept} style={styles.acceptButton}>+ Accept</button>
+        <button onClick={handleReject} style={styles.rejectButton}>- Reject</button>
+      </div>
     </div>
   );
+};
+
+const styles = {
+  container: {
+    padding: '20px',
+    fontFamily: 'Arial, sans-serif',
+    maxWidth: '600px',
+    margin: '0 auto',
+  },
+  header: {
+    fontSize: '24px',
+    textAlign: 'center',
+    marginBottom: '20px',
+    color: '#333', // Dark text for the header
+  },
+  card: {
+    backgroundColor: '#333', // Dark background for the card
+    padding: '20px',
+    borderRadius: '10px',
+    boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
+    textAlign: 'center',
+    color: '#fff', // White text for better contrast
+  },
+  avatar: {
+    width: '100px',
+    height: '100px',
+    borderRadius: '50%',
+    marginBottom: '15px',
+  },
+  name: {
+    fontSize: '20px',
+    marginBottom: '10px',
+    color: '#fff', // White text for the name
+  },
+  detail: {
+    fontSize: '16px',
+    margin: '5px 0',
+    color: '#fff', // White text for details
+  },
+  link: {
+    color: '#1e90ff', // Bright blue for links
+    textDecoration: 'none',
+  },
+  buttons: {
+    display: 'flex',
+    justifyContent: 'center',
+    marginTop: '20px',
+    gap: '10px',
+  },
+  acceptButton: {
+    padding: '10px 20px',
+    fontSize: '16px',
+    backgroundColor: '#28a745',
+    color: '#fff',
+    border: 'none',
+    borderRadius: '5px',
+    cursor: 'pointer',
+  },
+  rejectButton: {
+    padding: '10px 20px',
+    fontSize: '16px',
+    backgroundColor: '#dc3545',
+    color: '#fff',
+    border: 'none',
+    borderRadius: '5px',
+    cursor: 'pointer',
+  },
 };
 
 export default CandidateSearch;
